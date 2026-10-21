@@ -35,7 +35,9 @@ The typical use case is for running regular pairwise contamination checking, per
 
 - `summary`: contamination-screen summary of pairwise comparisons. Saved as `summary.tsv`.
 - `matrix`: Matrix of shared variants across pairs. Saved as `matrix.tsv`.
-- `filtered_vcfs`: Filtered VCFs and index files.
+- `filtered_vcfs`: Filtered VCFs.
+- `filtered_vcf_indexes`: TBI index files for filtered VCFs.
+- `filter_jsons`: JSON showing the values of the `pass_only`, `min_dp`, `min_af`, and `max_gnomad` submitted to contamination-screen.py for each sample.
 - `flagged_pairs`: Flagged-pair output TSVs - one file is produced per flagged pair.
 - `plots`: VAF log2-ratio histogram plots - one file is produced per flagged pair.
 

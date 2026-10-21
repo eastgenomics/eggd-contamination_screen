@@ -180,7 +180,7 @@
       "patterns": [
         "*.json"
       ],
-      "help": "Statistics from VCF filtering stored in JSON format"
+      "help": "JSON showing the values of the `pass_only`, `min_dp`, `min_af`, and `max_gnomad` submitted to contamination-screen.py for each sample."
     },
     {
       "name": "flagged_pairs",
