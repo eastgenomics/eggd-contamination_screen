@@ -28,7 +28,6 @@ The typical use case is for running regular pairwise contamination checking, per
 - `-in_shared_z`: Flag a pair only if the within-run z-score of shared-variant count meets or exceeds this threshold (computed across all pairs in the run). Flagging occurs only when the `-inon_unity_count` threshold is also met. (Default: 2.0)
 - `-iinclude_non_pass`: Include non-PASS variants. (Default: false)
 - `-imax_output`: Maximum number of flagged pairs to write detail TSVs and plots for, ranked by non-unity count. Set to 0 for no limit. (Default: 0)
-- `-ithreads`: Number of parallel threads for pairwise comparisons. (Default: 8)
 - `-iverbose`: Enable debug logging. (Default: false)
 
 ## What are the outputs?
@@ -71,6 +70,5 @@ dx run app-eggd_contamination-screen \
  -ifreemix_threshold=0.2 \
  -inon_unity_count=15 \
  -in_shared_z=2.5 \
- -imax_output=20 \
- -ithreads=12
+ -imax_output=20
 ```

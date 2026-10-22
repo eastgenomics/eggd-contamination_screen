@@ -9,8 +9,8 @@ main() {
 
     # Index all the VCFs
     VCF_DIR="/home/dnanexus/in/vcfs/"
-    find $VCF_DIR -type f -name "*.vcf.gz" -exec mv -t $VCF_DIR {} +
-    find $VCF_DIR -name "*.vcf.gz" -print0 | xargs -0 -P 32 -I {} bcftools index -t {}
+    find "$VCF_DIR" -type f -name "*.vcf.gz" -exec mv -t "$VCF_DIR" {} +
+    find "$VCF_DIR" -name "*.vcf.gz" -print0 | xargs -0 -P $(nproc) -I {} bcftools index -t {}
 
     if [[ -n $samplesheet ]]; then
         # Get plate layout from SampleSheet.csv
@@ -20,18 +20,17 @@ main() {
         # <sample_name>	1	B
         # ...
         # contamination-screen.py needs the data to be multiqc-style formatted, hence the column names
-        SAMPLESHEET=$(find /home/dnanexus/in/samplesheet/ -name "*.csv")
-        DATA_START=$(grep -n Sample_ID $SAMPLESHEET | cut -f1 -d":")
-        tail -n+$(bc -l <<< "$DATA_START + 1") $SAMPLESHEET > samplesheet_data.csv
+        DATA_START=$(tr -d '\r' "$samplesheet_path" | grep -n Sample_ID | cut -f1 -d":")
+        tr -d '\r' "$samplesheet_path" | tail -n+$(($DATA_START + 1)) > samplesheet_data.csv
         echo -e "Sample\tcustom_content_samplesheet_wells-well_column\tcustom_content_samplesheet_wells-well_row" > plate_layout.tsv
         cut -f1,4 -d"," samplesheet_data.csv | sed -E "s:(.+),([A-H])([0-9]+):\1\t\3\t\2:g" >> plate_layout.tsv
-   fi
+    fi
 
     # Parse VerifyBAMID data
-    if [[ -n $verifybamid ]]; then
+    if [[ -n "$verifybamid" ]]; then
         echo -e "Sample\tFREEMIX" > freemix.tsv
         VERIFYBAMID_FILES=($(find /home/dnanexus/in/verifybamid/ -name "*selfSM"))
-        cat ${VERIFYBAMID_FILES[@]} | grep -v "^#" | cut -f1,7 >> freemix.tsv
+        cat "${VERIFYBAMID_FILES[@]}" | grep -v "^#" | cut -f1,7 >> freemix.tsv
     fi
 
     CMD=(
@@ -48,7 +47,7 @@ main() {
         --max-output "$max_output"
         --freemix-threshold "$freemix_threshold"
         --bin-width "$bin_width"
-        --threads "$threads"
+        --threads "$(nproc)"
     )
 
     if [[ $include_non_pass == true ]]; then CMD+=(--include-non-pass); fi

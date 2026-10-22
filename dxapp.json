@@ -14,7 +14,7 @@
       "optional": false,
       "label": "VCFs",
       "patterns": [
-        "*.vcf.gz", "*.vcf"
+        "*.vcf.gz"
       ]
     },
     {
@@ -122,13 +122,6 @@
       "help": "Re-run filtering even if filtered VCFs already exist."
     },
     {
-      "name": "threads",
-      "class": "int",
-      "default": 8,
-      "label": "Thread count",
-      "help": "Number of parallel threads for pairwise comparisons."
-    },
-    {
       "name": "verbose",
       "class": "boolean",
       "default": false,
@@ -142,7 +135,7 @@
       "class": "file",
       "label": "summary",
       "patterns": [
-        "summar.tsv"
+        "summary.tsv"
       ],
       "help": "Summary"
     },
