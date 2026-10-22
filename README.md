@@ -12,10 +12,10 @@ The typical use case is for running regular pairwise contamination checking, per
 ### Required arguments
 
 - `-ivcfs`: VCF file. Repeatable.
-- `-iverifybamid`: verifyBamID results.
 
 ### Optional arguments
 
+- `-iverifybamid`: verifyBamID results - expected to be \*.selfSM
 - `-isamplesheet`: SampleSheet for the run-of-origin; used to infer plate layout. If not provided, the output will be sorted on sample name alphanumerically.
 - `-iplots`: Boolean. If submitted, AF log2-ratio plots will be generated. The `-ibin_width` argument can be configured to change bin width. (Default: false)
 - `-ibin_width`: Controls bin-width on VAF log2-ratio histograms. (Default: 0.2)
