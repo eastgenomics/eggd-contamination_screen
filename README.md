@@ -47,9 +47,8 @@ The typical use case is for running regular pairwise contamination checking, per
 
 ```
 dx run app-eggd_contamination-screen \
-  -iverifybamid=project-xxxxx:file-xxxxx \
   -ivcfs=project-xxxxx:file-xxxxx \
-  [[-ivcfs=...]]
+  [-ivcfs=... [...]] 
 ```
 
 ### With all possible settings
@@ -57,8 +56,9 @@ dx run app-eggd_contamination-screen \
 ```
 dx run app-eggd_contamination-screen \
  -ivcfs=project-xxxxxx:file-xxxxxx \
- [[-ivcfs=...]] \
+ [-ivcfs=... [...]] \
  -iverifybamid=project-xxxxx:file-xxxxx \
+ [-iverifybamid=... [...]] \
  -isamplesheet=project-xxxxx:file-xxxxx \
  -iverbose \
  -iinclude_non_pass \
