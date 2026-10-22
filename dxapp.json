@@ -19,13 +19,13 @@
     },
     {
       "name": "verifybamid",
-      "class": "file",
-      "optional": false,
+      "class": "array:file",
+      "optional": true,
       "label": "verifyBamID results",
       "patterns": [
-        "*verifybamid-results.txt"
+        "*selfSM"
       ],
-      "help": "verifyBamID results. At minimum, must be a tab-delimited file containing sample name and FREEMIX/Contamination fraction."
+      "help": "verifyBamID results"
     },
     {
       "name": "samplesheet",
