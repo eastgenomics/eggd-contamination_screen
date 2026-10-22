@@ -20,8 +20,8 @@ main() {
         # <sample_name>	1	B
         # ...
         # contamination-screen.py needs the data to be multiqc-style formatted, hence the column names
-        DATA_START=$(tr -d '\r' "$samplesheet_path" | grep -n Sample_ID | cut -f1 -d":")
-        tr -d '\r' "$samplesheet_path" | tail -n+$(($DATA_START + 1)) > samplesheet_data.csv
+        DATA_START=$(grep -n Sample_ID $samplesheet_path | cut -f1 -d":")
+        tail -n+$(($DATA_START + 1)) $samplesheet_path > samplesheet_data.csv
         echo -e "Sample\tcustom_content_samplesheet_wells-well_column\tcustom_content_samplesheet_wells-well_row" > plate_layout.tsv
         cut -f1,4 -d"," samplesheet_data.csv | sed -E "s:(.+),([A-H])([0-9]+):\1\t\3\t\2:g" >> plate_layout.tsv
     fi
