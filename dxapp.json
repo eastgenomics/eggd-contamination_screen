@@ -1,7 +1,7 @@
 {
-  "name": "eggd_<tool_name>",
-  "title": "eggd_<tool_name>",
-  "summary": "description",
+  "name": "eggd_contamination-screen",
+  "title": "eggd_contamination-screen",
+  "summary": "DNANexus app wrapper around contamination-screen.py",
   "dxapi": "1.0.0",
   "version": "1.0.0",
   "properties": {
@@ -9,63 +9,192 @@
     },
   "inputSpec": [
     {
-      "name": "input_file",
-      "class": "file",
-      "optional": true,
-      "label": "Name of input file",
-      "patterns": [
-        "*.tsv", "*.vcf", "*.bed", "*.xlsx"
-      ],
-      "help": "Description"
-    },
-    {
-      "name": "input_file_array",
+      "name": "vcfs",
       "class": "array:file",
       "optional": false,
-      "label": "Name of input file array",
-      "suggestions": [
-        {
-        "project": "project-Fkb6Gkj433GVVvj73J7x8KbV",
-        "path": "/folder1/folder2/"
-        }
+      "label": "VCFs",
+      "patterns": [
+        "*.vcf.gz"
+      ]
+    },
+    {
+      "name": "verifybamid",
+      "class": "array:file",
+      "optional": true,
+      "label": "verifyBamID results",
+      "patterns": [
+        "*selfSM"
       ],
-      "help": "Description"
+      "help": "verifyBamID results"
     },
     {
-      "name": "input_boolean",
+      "name": "samplesheet",
+      "class": "file",
+      "optional": true,
+      "label": "SampleSheet",
+      "patterns": [
+        "*.csv"
+      ],
+      "help": "SampleSheet"
+    },
+    {
+      "name": "plots",
       "class": "boolean",
-      "optional": true,
-      "default": true,
-      "label": "Name of field",
-      "help": "Description"
+      "default": false,
+      "label": "log2 AF ratio plots",
+      "help": "Generate plots showing histograms of log2 AF ratios. One plot per sample will be generated."
     },
     {
-      "name": "input_string",
-      "class": "string",
-      "label": "Input string field name",
-      "optional": true,
-      "default": "default string input",
-      "help": "Description"
+      "name": "bin_width",
+      "class": "float",
+      "default": 0.2,
+      "label": "Histogram bin width",
+      "help": "VAF log2-ratio histogram bin width."
+    },
+    {
+      "name": "min_af",
+      "class": "float",
+      "default": 0.03,
+      "label": "Minimum VAF",
+      "help": "Minimum VAF in both samples for a variant to be informative."
+    },
+    {
+      "name": "min_dp",
+      "class": "int",
+      "default": 99,
+      "label": "Minimum read depth",
+      "help": "Minimum read depth (`FORMAT/DP`) to retain a variant. The filter expression is DP < min_dp, so `DP=99` is retained by default - this matches the clinical pipeline expression `FORMAT/DP<99`."
+    },
+    {
+      "name": "max_gnomad",
+      "class": "float",
+      "default": 0.4,
+      "label": "Maximum GnomAD AF",
+      "help": "Exclude variants with gnomAD AF greater than, or equal to, this value. Very common variants (AF > 0.40) produce false 2:1 ratio signals when one sample is hom-alt and the other is het. Set to 1.0 to disable."
+    },
+    {
+      "name": "min_shared",
+      "class": "int",
+      "default": 10,
+      "label": "Minimum shared variants",
+      "help": "Minimum number of informative shared variants required before assessing a pair."
+    },
+    {
+      "name": "freemix_threshold",
+      "class": "float",
+      "default": 0.15,
+      "label": "Minimum FREEMIX threshold",
+      "help": "Minimum recipient FREEMIX fraction (0–1) required for flagging."
+    },
+    {
+      "name": "non_unity_count",
+      "class": "int",
+      "default": 10,
+      "label": "Non-unity count threshold",
+      "help": "Flag a pair if the non-unity peak contains at least this many variants."
+    },
+    {
+      "name": "n_shared_z",
+      "class": "float",
+      "default": 2.0,
+      "label": "Z-score threshold for number of shared variants",
+      "help": "Flag a pair only if the within-run z-score of shared-variant count meets or exceeds this threshold (computed across all pairs in the run). Flagging occurs only when the `-inon_unity_count` threshold is also met."
+    },
+    {
+      "name": "include_non_pass",
+      "class": "boolean",
+      "default": false,
+      "label": "Include non-PASS variants",
+      "help": "Include non-PASS variants."
+    },
+    {
+      "name": "max_output",
+      "class": "int",
+      "default": 0,
+      "label": "Maximum output limit",
+      "help": "Maximum number of flagged pairs to write detail TSVs and plots for, ranked by non_unity_count. Set to 0 for no limit."
+    },
+    {
+      "name": "force_refilter",
+      "class": "boolean",
+      "default": false,
+      "label": "Force refiltering",
+      "help": "Re-run filtering even if filtered VCFs already exist."
+    },
+    {
+      "name": "verbose",
+      "class": "boolean",
+      "default": false,
+      "label": "Verbose mode",
+      "help": "Enable debug logging"
     }
   ],
   "outputSpec": [
     {
-      "name": "output_file",
+      "name": "summary",
       "class": "file",
-      "label": "output file",
+      "label": "summary",
       "patterns": [
-        "*.tsv", "*.vcf", "*.bed", "*.xlsx"
+        "summary.tsv"
       ],
-      "help": "Description"
+      "help": "Summary"
     },
     {
-      "name": "output_files_array",
+      "name": "matrix",
+      "class": "file",
+      "label": "matrix",
+      "patterns": [
+        "matrix.tsv"
+      ],
+      "help": "Matrix of shared variants across pairs."
+    },
+    {
+      "name": "filtered_vcfs",
       "class": "array:file",
-      "label": "output files",
+      "label": "Filtered VCFs",
+      "patterns": [
+        "*.vcf.gz"
+      ],
+      "help": "Filtered VCFs"
+    },
+    {
+      "name": "filtered_vcf_indexes",
+      "class": "array:file",
+      "label": "Filtered VCF indexes",
+      "patterns": [
+        "*.vcf.gz.tbi"
+      ],
+      "help": "Filtered VCF index files"
+    },
+    {
+      "name": "filter_jsons",
+      "class": "array:file",
+      "label": "Filtered VCF JSON statistics",
+      "patterns": [
+        "*.json"
+      ],
+      "help": "JSON showing the values of the `pass_only`, `min_dp`, `min_af`, and `max_gnomad` submitted to contamination-screen.py for each sample."
+    },
+    {
+      "name": "flagged_pairs",
+      "class": "array:file",
       "optional": true,
-      "help": "Description"
+      "label": "Flagged-pair outputs",
+      "patterns": [
+        "*.tsv"
+      ],
+      "help": "Flagged-pair output TSVs - one file is produced per flagged pair."
+    },
+    {
+      "name": "plots",
+      "class": "array:file",
+      "optional": true,
+      "label": "Plots",
+      "patterns": [
+        "*.png"
+      ],
+      "help": "VAF log2-ratio histogram plots - one file is produced per flagged pair."
     }
-
   ],
   "runSpec": {
     "timeoutPolicy": {
@@ -74,28 +203,15 @@
       }
     },
     "distribution": "Ubuntu",
-    "release": "20.04",
+    "release": "24.04",
     "version": "0",
     "interpreter": "bash",
     "file": "src/code.sh",
     "assetDepends": [
       {
-        "name": "bedtools",
-        "project": "project-Fkb6Gkj433GVVvj73J7x8KbV",
-        "folder": "/app_assets/bedtools/bedtools_v2.30.0",
-        "version": "2.30.0"
-      },
-      {
-        "name": "htslib",
-        "project": "project-Fkb6Gkj433GVVvj73J7x8KbV",
-        "folder": "/app_assets/htslib/htslib_v1.15.0",
-        "version": "1.15.0"
-      },
-      {
-        "name": "python_packages",
-        "project": "project-Fkb6Gkj433GVVvj73J7x8KbV",
-        "folder": "/app_assets/python_packages/python_packages_v1.1.0",
-        "version": "1.1.0"
+        "id": "record-J9QzZyj487v9Gj2QgP7vK47g",
+        "name": "htslib_suite_asset",
+        "version": "1.24"
       }
     ]
   },

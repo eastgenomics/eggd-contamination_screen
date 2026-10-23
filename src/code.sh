@@ -1,29 +1,71 @@
 #!/bin/bash
-# eggd_app
+# eggd-contamination_screen
 
-# Exit at any point if there is any error and output each line as it is executed (for debugging)
-# -e = exit on error; -x = output each line that is executed to log; -o pipefail = throw an error if there's an error in pipeline
 set -e -x -o pipefail
 
 main() {
-    # Install packages if required
+    pip3 install /home/dnanexus/python_packages/*.whl
+    dx-download-all-inputs
 
-    ## Download input files (individual or an array)
-    # either all at once, in which case they are placed into separate folders
-    dx-download-all-inputs --parallel
-    # Each input is placed under its own subfolder "~/in/name_of_input_field/", named after the input field.
-    # can be accessed by using $input_file_path variable or
-    # $input_file_name equivalent to basename command,
-    # $input_file_prefix filename without the extension
-    #  also for array of files input, individual files are downloaded into subfolders
-    # /in/input_file_array/0/file0 and /in/input_file_array/1/file1 and so on
-    # in which case they have to be moved manually into the same folder, if needed
-    mkdir input_files
-    find ~/in/input_file_array -type f -name "*" -print0 | xargs -0 -I {} mv {} ~/input_files
+    # Index all the VCFs
+    VCF_DIR="/home/dnanexus/in/vcfs/"
+    find "$VCF_DIR" -type f -name "*.vcf.gz" -exec mv -t "$VCF_DIR" {} +
+    find "$VCF_DIR" -name "*.vcf.gz" -print0 | xargs -0 -P $(nproc) -I {} bcftools index -t {}
 
-    # or files can be downloaded one by one, specifying a name for them within the workstation
-    dx download "$input_file" -o input_file_name
+    if [[ -n $samplesheet ]]; then
+        # Get plate layout from SampleSheet.csv
+        # output format:
+        # Sample	custom_content_samplesheet_wells-well_column	custom_content_samplesheet_wells-well_row
+        # <sample_name>	1	A
+        # <sample_name>	1	B
+        # ...
+        # contamination-screen.py needs the data to be multiqc-style formatted, hence the column names
+        DATA_START=$(grep -n Sample_ID $samplesheet_path | cut -f1 -d":")
+        tail -n+$(($DATA_START + 1)) $samplesheet_path > samplesheet_data.csv
+        echo -e "Sample\tcustom_content_samplesheet_wells-well_column\tcustom_content_samplesheet_wells-well_row" > plate_layout.tsv
+        cut -f1,4 -d"," samplesheet_data.csv | sed -E "s:(.+),([A-H])([0-9]+):\1\t\3\t\2:g" >> plate_layout.tsv
+    fi
 
-    
+    # Parse VerifyBAMID data
+    if [[ -n "$verifybamid" ]]; then
+        echo -e "Sample\tFREEMIX" > freemix.tsv
+        VERIFYBAMID_FILES=($(find /home/dnanexus/in/verifybamid/ -name "*selfSM"))
+        cat "${VERIFYBAMID_FILES[@]}" | grep -v "^#" | cut -f1,7 >> freemix.tsv
+    fi
 
+    CMD=(
+        /home/dnanexus/contamination_screen.py
+        "$VCF_DIR"
+        --outdir results
+        --vcf-glob "*.vcf.gz"
+        --min-af "$min_af"
+        --min-dp "$min_dp"
+        --max-gnomad "$max_gnomad"
+        --min-shared "$min_shared"
+        --non-unity-count "$non_unity_count"
+        --n-shared-z "$n_shared_z"
+        --max-output "$max_output"
+        --freemix-threshold "$freemix_threshold"
+        --bin-width "$bin_width"
+        --threads "$(nproc)"
+    )
+
+    if [[ $include_non_pass == true ]]; then CMD+=(--include-non-pass); fi
+    if [[ $force_refilter == true ]]; then CMD+=(--force-refilter); fi
+    if [[ $plots == true ]]; then CMD+=(--plots); fi
+    if [[ $verbose == true ]]; then CMD+=(--verbose); fi
+    if [[ -n $verifybamid ]]; then CMD+=(--freemix-file freemix.tsv); fi
+    if [[ -n $samplesheet ]]; then CMD+=(--plate-layout plate_layout.tsv); fi
+
+    python3 "${CMD[@]}"
+
+    mkdir -p out/matrix out/summary out/filtered_vcfs out/filtered_vcf_indexes out/filter_jsons
+    mv results/matrix.tsv out/matrix/
+    mv results/summary.tsv out/summary/
+    mv results/filtered/*.vcf.gz out/filtered_vcfs/
+    mv results/filtered/*.vcf.gz.tbi out/filtered_vcf_indexes/
+    mv results/filtered/*.json out/filter_jsons
+    mv results/* out/
+
+    dx-upload-all-outputs
 }
